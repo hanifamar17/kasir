@@ -1,0 +1,33 @@
+{% load currency %}
+<table>
+    <thead>
+        <tr>
+            <th>Product Number</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Unit</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.product_number }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.qty }}</td>
+            <td>{{ product.unit }}</td>
+            <td>{{ product.price|currency }}</td>
+            <td>{{ product.total|currency}}</td>
+            <td>{{ product.category.name }}</td>  <!-- Menampilkan nama kategori -->
+            <td>{{ product.description }}</td>
+            <td>{{ product.created_at }}</td>
+            <td>{{ product.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

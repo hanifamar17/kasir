@@ -1,0 +1,20 @@
+<table>
+    <thead>
+        <tr>
+            <th>Nama Kategori</th>
+            <th>Deskripsi</th>
+            <th>Dibuat Pada</th>
+            <th>Diperbarui Pada</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for category in categories %}
+        <tr>
+            <td>{{ category.name }}</td>
+            <td>{{ category.description }}</td>
+            <td>{{ category.created_at }}</td>
+            <td>{{ category.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
