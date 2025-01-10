@@ -1,0 +1,26 @@
+<table>
+    <thead>
+        <tr>
+            <th>Perusahaan</th>
+            <th>Contact Person</th>
+            <th>No Hp</th>
+            <th>Email</th>
+            <th>Alamat</th>
+            <th>Dibuat Pada</th>
+            <th>Diperbarui Pada</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for supplier in suppliers %}
+        <tr>
+            <td>{{ supplier.name }}</td>
+            <td>{{ supplier.contact_person }}</td>
+            <td>{{ supplier.phone_number }}</td>
+            <td>{{ supplier.email }}</td>
+            <td>{{ supplier.address }}</td>
+            <td>{{ supplier.created_at }}</td>
+            <td>{{ supplier.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

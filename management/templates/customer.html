@@ -1,0 +1,24 @@
+<table>
+    <thead>
+        <tr>
+            <th>Nama Pelanggan</th>
+            <th>No Hp</th>
+            <th>Email</th>
+            <th>Alamat</th>
+            <th>Dibuat Pada</th>
+            <th>Diperbarui Pada</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in customers %}
+        <tr>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.phone_number }}</td>
+            <td>{{ customer.email }}</td>
+            <td>{{ customer.address }}</td>
+            <td>{{ customer.created_at }}</td>
+            <td>{{ customer.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

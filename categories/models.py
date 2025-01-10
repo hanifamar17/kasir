@@ -16,6 +16,8 @@ class Category(models.Model):
     class Meta:
         managed = False  # Jangan biarkan Django mengelola tabel ini
         db_table = 'categories'  # Nama tabel di database
+        verbose_name = "Category"  # Nama tunggal
+        verbose_name_plural = "Categories"  # Nama jamak
 
 class Product(models.Model):
     id = models.AutoField(primary_key=True)
@@ -36,6 +38,8 @@ class Product(models.Model):
     class Meta:
         db_table = 'products'
         managed = False  # Karena tabel sudah ada di database
+        verbose_name = "Product"  # Nama tunggal
+        verbose_name_plural = "Products"  # Nama jamak
 
     # Signal untuk menghitung total sebelum menyimpan
 @receiver(pre_save, sender=Product)

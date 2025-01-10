@@ -1,0 +1,26 @@
+<table>
+    <thead>
+        <tr>
+            <th>Posisi/Jabatan</th>
+            <th>Nama Pegawai</th>
+            <th>No Hp</th>
+            <th>Email</th>
+            <th>Alamat</th>
+            <th>Dibuat Pada</th>
+            <th>Diperbarui Pada</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in employees %}
+        <tr>
+            <td>{{ employee.position }}</td>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.phone_number }}</td>
+            <td>{{ employee.email }}</td>
+            <td>{{ employee.address }}</td>
+            <td>{{ employee.created_at }}</td>
+            <td>{{ employee.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
