@@ -1,0 +1,244 @@
+{% load static %}
+{% csrf_token %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashier System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <!-- Header -->
+        <div class="bg-white shadow-lg rounded-lg p-6 mb-6">
+            <h1 class="text-2xl font-bold mb-4">Cashier System</h1>
+            <div class="flex gap-4">
+                <input type="text" id="product-code" class="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder="Scan or enter product code">
+                <button onclick="searchProduct()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Add Product
+                </button>
+            </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Product List -->
+            <div class="md:col-span-2">
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Cart Items</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left p-2">Product</th>
+                                    <th class="text-right p-2">Price</th>
+                                    <th class="text-right p-2">Qty</th>
+                                    <th class="text-right p-2">Subtotal</th>
+                                    <th class="text-center p-2">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cart-items">
+                                <!-- Cart items will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="md:col-span-1">
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Payment</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Total</label>
+                            <div id="total-amount" class="text-3xl font-bold">Rp 0</div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Payment Method</label>
+                            <select id="payment-method" class="w-full p-2 border rounded">
+                                <option value="CASH">Cash</option>
+                                <option value="CARD">Card</option>
+                                <option value="TRANSFER">Transfer</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Paid Amount</label>
+                            <input type="number" id="paid-amount" class="w-full p-2 border rounded"
+                                onchange="calculateChange()">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Change</label>
+                            <div id="change-amount" class="text-2xl font-semibold">Rp 0</div>
+                        </div>
+
+                        <button onclick="saveTransaction()"
+                            class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                            Complete Transaction
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            }).format(amount);
+        }
+
+        async function searchProduct() {
+            const code = document.getElementById('product-code').value;
+            try {
+                const response = await fetch(`/kasir/get-product/?code=${encodeURIComponent(code)}`);
+                if (!response.ok) throw new Error('Product not found');
+
+                const product = await response.json();
+
+                addToCart(product);
+                document.getElementById('product-code').value = '';
+            } catch (error) {
+                alert('Product not found');
+            }
+        }
+
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.product_number === product.product_number);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+                existingItem.subtotal = existingItem.quantity * existingItem.price;
+            } else {
+                cart.push({
+                    product_number: product.product_number,
+                    name: product.name,
+                    price: parseFloat(product.price),
+                    quantity: 1,
+                    subtotal: parseFloat(product.price)
+                });
+            }
+
+            updateCartDisplay();
+        }
+
+        function updateQuantity(index, change) {
+            cart[index].quantity += change;
+            if (cart[index].quantity < 1) {
+                cart.splice(index, 1);
+            } else {
+                cart[index].subtotal = cart[index].quantity * cart[index].price;
+            }
+            updateCartDisplay();
+        }
+
+        function updateCartDisplay() {
+            const tbody = document.getElementById('cart-items');
+            tbody.innerHTML = '';
+
+            cart.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-2">${item.name}</td>
+                        <td class="text-right p-2">${formatCurrency(item.price)}</td>
+                        <td class="text-right p-2">
+                            <div class="flex justify-end items-center gap-2">
+                                <button onclick="updateQuantity(${index}, -1)" 
+                                    class="px-2 bg-gray-200 rounded">-</button>
+                                ${item.quantity}
+                                <button onclick="updateQuantity(${index}, 1)"
+                                    class="px-2 bg-gray-200 rounded">+</button>
+                            </div>
+                        </td>
+                        <td class="text-right p-2">${formatCurrency(item.subtotal)}</td>
+                        <td class="text-center p-2">
+                            <button onclick="updateQuantity(${index}, -${item.quantity})"
+                                class="text-red-500 hover:text-red-700">Remove</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            document.getElementById('total-amount').textContent = formatCurrency(total);
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
+            const change = paid - total;
+            document.getElementById('change-amount').textContent = formatCurrency(Math.max(0, change));
+        }
+
+        async function saveTransaction() {
+            if (cart.length === 0) {
+                alert('Cart is empty');
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
+
+            if (paid < total) {
+                alert('Insufficient payment amount');
+                return;
+            }
+
+            const data = {
+                items: cart.map(item => ({
+                    product_number: item.product_id,
+                    quantity: item.quantity,
+                    price: item.price,
+                    subtotal: item.subtotal,
+                })),
+                total_amount: total,
+                payment_method: document.getElementById('payment-method').value,
+                paid_amount: paid,
+                change_amount: paid - total,
+                
+            };
+            console.log(JSON.stringify(data));
+
+            try {
+                const response = await fetch('/kasir/save-transaction/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Failed to save transaction');
+
+                const result = await response.json();
+                alert('Transaction completed successfully!');
+                cart = [];
+                updateCartDisplay();
+                document.getElementById('paid-amount').value = '';
+            } catch (error) {
+                alert('Failed to save transaction');
+            }
+        }
+
+        function getCookie(name) {
+            let value = '; ' + document.cookie;
+            let parts = value.split('; ' + name + '=');
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+    </script>
+</body>
+
+</html>

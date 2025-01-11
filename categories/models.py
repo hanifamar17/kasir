@@ -23,7 +23,7 @@ class Product(models.Model):
     id = models.AutoField(primary_key=True)
     product_number = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
-    qty = models.IntegerField()
+    qty = models.IntegerField(default=0)
     unit = models.CharField(max_length=10)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # Total bisa kosong

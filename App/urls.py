@@ -19,5 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path('kasir/', include('transaction.urls')),  # Arahkan ke urls.py aplikasi transaction
+    path('kasir/', include('transaction.urls')),  # Prefix '/kasir/'
 ]
