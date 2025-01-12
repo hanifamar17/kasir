@@ -12,6 +12,9 @@ from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
 
+def homepage(request):
+    return render(request, 'homepage.html')
+
 @login_required
 def cashier_view(request):
     products = Product.objects.all()
