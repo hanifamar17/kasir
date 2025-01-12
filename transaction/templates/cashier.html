@@ -1,5 +1,5 @@
-{% load static %}
 {% csrf_token %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,16 +13,34 @@
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
         <!-- Header -->
+         <!-- Employee -->
+        <div class="form-group">
+            <label for="employee">Employee:</label>
+            <select id="employee" class="form-control" required>
+                <option value="">-- Select Employee --</option>
+                {% for employee in employees %}
+                <option value="{{ employee.id }}">{{ employee.employee_id }} - {{ employee.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- Customer -->
+        <div class="form-group">
+            <label for="customer">Customer:</label>
+            <select id="customer" class="form-control">
+                <option value="">-- Select Customer --</option>
+                {% for customer in customers %}
+                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Cashier System -->
         <div class="bg-white shadow-lg rounded-lg p-6 mb-6">
             <h1 class="text-2xl font-bold mb-4">Cashier System</h1>
-            <div class="flex gap-4">
-                <input type="text" id="product-code" class="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                    placeholder="Scan or enter product code">
-                <button onclick="searchProduct()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Add Product
-                </button>
-            </div>
+            
         </div>
+
+        
 
         <!-- Cart -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -30,7 +48,14 @@
             <div class="md:col-span-2">
                 <div class="bg-white shadow-lg rounded-lg p-6">
                     <h2 class="text-xl font-semibold mb-4">Cart Items</h2>
-                    <div class="overflow-x-auto">
+                    <div class="flex gap-4 py-4">
+                        <input type="text" id="product-code" class="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                            placeholder="Scan or enter product code">
+                        <button onclick="searchProduct()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            Add Product
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto py-4">
                         <table class="w-full">
                             <thead>
                                 <tr class="border-b">
@@ -188,9 +213,22 @@
                 return;
             }
 
+            //console.log('Isi cart:', cart);
+
             const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
             const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
+            const customerId = document.getElementById('customer').value;
+            const employeeId = document.getElementById('employee').value;
 
+            // Validasi
+            if (!customerId) {
+                alert('Please select a customer');
+                return;
+            }
+            if (!employeeId) {
+                alert('Please select an employee');
+                return;
+            }
             if (paid < total) {
                 alert('Insufficient payment amount');
                 return;
@@ -198,7 +236,7 @@
 
             const data = {
                 items: cart.map(item => ({
-                    product_number: item.product_id,
+                    product_number: item.product_number,
                     quantity: item.quantity,
                     price: item.price,
                     subtotal: item.subtotal,
@@ -207,9 +245,10 @@
                 payment_method: document.getElementById('payment-method').value,
                 paid_amount: paid,
                 change_amount: paid - total,
-                
+                customer_id: parseInt(customerId),
+                employee_id: parseInt(employeeId)
             };
-            console.log(JSON.stringify(data));
+            //console.log('Data yang akan dikirim:', JSON.stringify(data, null, 2));
 
             try {
                 const response = await fetch('/kasir/save-transaction/', {
@@ -221,22 +260,40 @@
                     body: JSON.stringify(data)
                 });
 
-                if (!response.ok) throw new Error('Failed to save transaction');
-
                 const result = await response.json();
+                //console.log('Response dari server:', result);
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to save transaction');
+                }
+
+
                 alert('Transaction completed successfully!');
                 cart = [];
                 updateCartDisplay();
                 document.getElementById('paid-amount').value = '';
+                document.getElementById('customer').value = '';
+                document.getElementById('employee').value = '';
             } catch (error) {
-                alert('Failed to save transaction');
+                //console.error('Error details:', error);
+                //console.error('Response dari server:', error.response);
+                alert(`Transaction failed: ${error.message}`);
             }
         }
 
         function getCookie(name) {
-            let value = '; ' + document.cookie;
-            let parts = value.split('; ' + name + '=');
-            if (parts.length === 2) return parts.pop().split(';').shift();
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
     </script>
 </body>

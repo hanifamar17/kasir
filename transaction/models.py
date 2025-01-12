@@ -12,10 +12,11 @@ class Transaction(models.Model):
         ('CARD', 'Card'),
         ('TRANSFER', 'Transfer'),
     ]
-    employee = models.ForeignKey('management.Employee', on_delete=models.CASCADE)
+    employee  = models.ForeignKey('management.Employee', on_delete=models.CASCADE)
     customer = models.ForeignKey('management.Customer', on_delete=models.CASCADE)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES) 
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES) 
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
     change_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     transaction_date = models.DateTimeField(default=timezone.now)
@@ -26,7 +27,7 @@ class Transaction(models.Model):
         return f"Transaction #{self.id} - {self.transaction_date}"
     
     class Meta:
-        managed = False  # Jangan biarkan Django mengelola tabel ini
+        managed = False# Jangan biarkan Django mengelola tabel ini
         db_table = 'transactions'  # Nama tabel di database
         verbose_name = "Transaction"  # Nama tunggal
         verbose_name_plural = "Transactions"  # Nama jamak
