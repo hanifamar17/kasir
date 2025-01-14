@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+{{ block.super }}
+<div>
+    <a href="{% url 'cashier' %}" class="button text-white text-sm text-center py-2 px-4 ml-2 bg-blue-600 rounded hover:bg-blue-800" target="_blank" >
+        Go to Cashier
+    </a>
+</div>
+
+{% endblock %}

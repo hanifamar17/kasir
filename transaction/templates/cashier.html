@@ -8,8 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cashier System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script
-        src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -29,7 +27,15 @@
         <!-- Header -->
         <!-- Cashier System -->
         <div class="bg-white shadow rounded-lg p-6 mb-6 text-gray-850">
-            <h1 class="text-2xl font-bold mb-4">Cashier System</h1>
+            <div class="py-4 flex justify-between space-x-4">
+                <div>
+                    <h1 class="text-2xl font-bold mb-4">Cashier System</h1>
+                </div>
+                <a href="/admin/transaction/transaction/"
+                    class="text-sm button flex items-center border border-black-500 text-black-500 rounded-sm px-4 hover:shadow-md transition duration-500">
+                    Ke Admin Panel
+                </a>
+            </div>
             <p>Selamat datang di sistem kasir <a class="font-medium">SBMS Connect</a></p>
         </div>
 
@@ -43,7 +49,7 @@
                     <div class="flex gap-4 py-4 mb-4">
                         <input type="text" id="product-code"
                             class="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                            placeholder="Scan or enter product code">
+                            placeholder="Scan or enter product code" required>
                         <button onclick="searchProduct()"
                             class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                             Add Product
@@ -92,34 +98,32 @@
                         </div>
 
                         <!-- Employee -->
-                        <div id="dropdown" class="py-1 md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1">
+                        <div id="autocomplete-employee"
+                            class="py-1 md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1">
                             <label for="employee" class="self-center text-gray-850">Employee</label>
                             <div class="relative z-0 w-full mb-5">
-                                <!-- Wrapper div for relative positioning -->
-                                <select id="employee"
-                                    class="px-4 block w-full bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200 pr-8"
-                                    required>
-                                    <option class="block text-gray-850" value=""> Select Employee </option>
-                                    {% for employee in employees %}
-                                    <option class="block text-gray-850" value="{{ employee.id }}">
-                                        {{employee.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input id="employee-input" type="text" list="employee-list" data-id=""
+                                    class="px-4 block w-full bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"
+                                    placeholder="Select employee" required>
+                                <div id="employee-list"
+                                    class="absolute z-20 w-full max-h-60 bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto hidden">
+                                    <!-- Options will be dynamically populated using JavaScript -->
+                                </div>
                             </div>
                         </div>
 
                         <!-- Customer -->
-                        <div class="py-1 md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1">
+                        <div id="autocomplete-customer"
+                            class="py-1 md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1">
                             <label for="customer" class="self-center text-gray-850">Customer</label>
                             <div class="relative z-0 w-full mb-5">
-                                <select id="customer"
-                                    class="pb-2 px-4 w-full bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200 pr-8"
-                                    required class="border rounded-sm border-gray-300 px-2 py-2 min-w-48 max-w-48">
-                                    <option class="text-gray-850" value=""> Select Customer </option>
-                                    {% for customer in customers %}
-                                    <option class="text-gray-850" value="{{ customer.id }}">{{ customer.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input id="customer-input" type="text" list="customer-list" data-id=""
+                                    class="px-4 block w-full bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"
+                                    placeholder="Select customer" required>
+                                <div id="customer-list"
+                                    class="absolute z-20 w-full max-h-60 bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto hidden">
+                                    <!-- Options will be dynamically populated using JavaScript -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,7 +149,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Paid Amount</label>
-                            <input type="number" id="paid-amount" class="w-full p-2 border rounded"
+                            <input type="number" id="paid-amount" class="w-full p-2 border rounded" required
                                 onchange="calculateChange()">
                         </div>
 
@@ -164,6 +168,132 @@
         </div>
     </div>
 
+    <!-- autocomplete employee list -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const employeeInput = document.getElementById("employee-input");
+            const employeeList = document.getElementById("employee-list");
+
+            // Event listener untuk input
+            employeeInput.addEventListener("input", function () {
+                const query = employeeInput.value.trim();
+
+                // Jika input tidak kosong, lakukan pencarian
+                if (query.length > 0) {
+                    // AJAX request untuk mendapatkan hasil pencarian
+                    fetch(`/kasir/search-employees/?query=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            employeeList.innerHTML = ""; // Kosongkan daftar sebelumnya
+
+                            if (data.length > 0) {
+                                // Tambahkan hasil pencarian ke dropdown
+                                data.forEach(employee => {
+                                    const option = document.createElement("div");
+                                    option.textContent = employee.name;
+                                    option.className =
+                                        "cursor-pointer px-4 py-2 hover:bg-gray-100";
+                                    option.dataset.id = employee.id;
+
+                                    // Event listener untuk memilih item
+                                    option.addEventListener("click", function () {
+                                        employeeInput.value = employee.name; // Isi input dengan nama yang dipilih
+                                        employeeInput.dataset.id = employee.id; // Simpan ID di data-id input
+                                        employeeList.classList.add("hidden"); // Sembunyikan dropdown
+                                    });
+
+                                    employeeList.appendChild(option);
+                                });
+                            } else {
+                                // Jika tidak ada hasil
+                                const noResult = document.createElement("div");
+                                noResult.textContent = "No results found...";
+                                noResult.className = "px-4 py-2 text-gray-500";
+                                employeeList.appendChild(noResult);
+                            }
+
+                            employeeList.classList.remove("hidden"); // Tampilkan dropdown
+                        })
+                        .catch(error => console.error("Error fetching employee data:", error));
+                } else {
+                    employeeList.innerHTML = ""; // Kosongkan dropdown jika input kosong
+                    employeeList.classList.add("hidden"); // Sembunyikan dropdown
+                }
+            });
+
+            // Event listener untuk menyembunyikan dropdown jika klik di luar
+            document.addEventListener("click", function (event) {
+                if (!employeeInput.contains(event.target) && !employeeList.contains(event.target)) {
+                    employeeList.classList.add("hidden");
+                }
+            });
+        });
+    </script>
+
+    <!-- autocomplete customer list -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const customerInput = document.getElementById("customer-input");
+            const customerList = document.getElementById("customer-list");
+
+            // Event listener untuk input
+            customerInput.addEventListener("input", function () {
+
+                const query = customerInput.value.trim();
+
+                // Jika input tidak kosong, lakukan pencarian
+                if (query.length > 0) {
+                    // AJAX request untuk mendapatkan hasil pencarian
+                    fetch(`/kasir/search-customers/?query=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            customerList.innerHTML = ""; // Kosongkan daftar sebelumnya
+
+                            if (data.length > 0) {
+                                // Tambahkan hasil pencarian ke dropdown
+                                data.forEach(customer => {
+                                    const option = document.createElement("div");
+                                    option.textContent = customer.name;
+                                    option.className =
+                                        "cursor-pointer px-4 py-2 hover:bg-gray-100";
+                                    option.dataset.id = customer.id;
+
+                                    // Event listener untuk memilih item
+                                    option.addEventListener("click", function () {
+                                        customerInput.value = customer.name; // Isi input dengan nama yang dipilih
+                                        customerInput.dataset.id = customer.id;
+                                        customerList.classList.add("hidden"); // Sembunyikan dropdown
+                                    });
+
+                                    customerList.appendChild(option);
+                                });
+                            } else {
+                                // Jika tidak ada hasil
+                                const noResult = document.createElement("div");
+                                noResult.textContent = "No results found...";
+                                noResult.className = "px-4 py-2 text-gray-500";
+                                customerList.appendChild(noResult);
+                            }
+
+                            customerList.classList.remove("hidden"); // Tampilkan dropdown
+                        })
+                        .catch(error => console.error("Error fetching customer data:", error));
+                } else {
+                    customerList.innerHTML = ""; // Kosongkan dropdown jika input kosong
+                    customerList.classList.add("hidden"); // Sembunyikan dropdown
+                }
+            });
+
+            // Event listener untuk menyembunyikan dropdown jika klik di luar
+            document.addEventListener("click", function (event) {
+                if (!customerInput.contains(event.target) && !customerList.contains(event.target)) {
+                    customerList.classList.add("hidden");
+                }
+            });
+        });
+    </script>
+
+    <!-- Main script for transaction-->
     <script>
         let cart = [];
 
@@ -175,17 +305,35 @@
         }
 
         async function searchProduct() {
-            const code = document.getElementById('product-code').value;
+            const inputField = document.getElementById('product-code');
+            const code = inputField.value.trim(); // Menghapus spasi di awal/akhir input
+
+            // Validasi jika input kosong
+            if (!code) {
+                inputField.setCustomValidity('Please enter a product code');
+                inputField.reportValidity(); // Menampilkan notifikasi bawaan form
+                return; // Hentikan eksekusi jika input kosong
+            } else {
+                inputField.setCustomValidity(''); // Hapus pesan error jika valid
+            }
+
             try {
                 const response = await fetch(`/kasir/get-product/?code=${encodeURIComponent(code)}`);
                 if (!response.ok) throw new Error('Product not found');
 
                 const product = await response.json();
 
+                if (product.stock <= 0) {
+                    alert('Product is out of stock!');
+                    inputField.value = '';
+                    return;
+                }
+
                 addToCart(product);
-                document.getElementById('product-code').value = '';
+                inputField.value = ''; // Kosongkan input setelah produk ditambahkan
             } catch (error) {
-                alert('Product not found');
+                inputField.setCustomValidity('Product not found');
+                inputField.reportValidity(); // Menampilkan pesan jika produk tidak ditemukan
             }
         }
 
@@ -193,15 +341,20 @@
             const existingItem = cart.find(item => item.product_number === product.product_number);
 
             if (existingItem) {
-                existingItem.quantity += 1;
-                existingItem.subtotal = existingItem.quantity * existingItem.price;
+                if (existingItem.quantity + 1 <= product.stock) {
+                    existingItem.quantity += 1;
+                    existingItem.subtotal = existingItem.quantity * existingItem.price;
+                } else {
+                    alert(`Cannot add more items. Available stock: ${product.stock}`);
+                }
             } else {
                 cart.push({
                     product_number: product.product_number,
                     name: product.name,
                     price: parseFloat(product.price),
                     quantity: 1,
-                    subtotal: parseFloat(product.price)
+                    subtotal: parseFloat(product.price),
+                    stock: product.stock
                 });
             }
 
@@ -209,11 +362,23 @@
         }
 
         function updateQuantity(index, change) {
-            cart[index].quantity += change;
-            if (cart[index].quantity < 1) {
-                cart.splice(index, 1);
-            } else {
-                cart[index].subtotal = cart[index].quantity * cart[index].price;
+            const item = cart[index];
+            const newQuantity = item.quantity + change;
+
+            if (change < 0) {
+                if (newQuantity < 1) {
+                    cart.splice(index, 1);
+                } else {
+                    item.quantity = newQuantity;
+                    item.subtotal = item.quantity * item.price;
+                }
+            } else if (change > 0) {
+                if (newQuantity > item.stock) {
+                    alert(`Cannot add more items. Available stock: ${item.stock}`);
+                    return;
+                }
+                item.quantity = newQuantity;
+                item.subtotal = item.quantity * item.price;
             }
             updateCartDisplay();
         }
@@ -223,9 +388,17 @@
             tbody.innerHTML = '';
 
             cart.forEach((item, index) => {
+                const remainingStock = item.stock - item.quantity;
+                const stockColor = remainingStock < 5 ? 'text-red-500' : 'text-green-500';
+
                 tbody.innerHTML += `
                     <tr class="border-b odd:bg-white even:bg-gray-50">
-                        <td class="p-2">${item.name}</td>
+                        <td class="p-2">
+                            ${item.name}
+                            <div class="text-sm ${stockColor}">
+                                Stock: ${remainingStock}
+                            </div>
+                        </td>
                         <td class="text-right p-2">${formatCurrency(item.price)}</td>
                         <td class="text-right p-2">
                             <div class="flex justify-end items-center gap-2">
@@ -233,7 +406,8 @@
                                     class="px-2 bg-gray-200 rounded">-</button>
                                 ${item.quantity}
                                 <button onclick="updateQuantity(${index}, 1)"
-                                    class="px-2 bg-gray-200 rounded">+</button>
+                                    class="px-2 bg-gray-200 rounded hover:bg-gray-300 ${remainingStock === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
+                                    ${remainingStock === 0 ? 'disabled' : ''}>+</button>
                             </div>
                         </td>
                         <td class="text-right p-2">${formatCurrency(item.subtotal)}</td>
@@ -266,22 +440,45 @@
             //console.log('Isi cart:', cart);
 
             const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
-            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
-            const customerId = document.getElementById('customer').value;
-            const employeeId = document.getElementById('employee').value;
+            const paidInput = document.getElementById('paid-amount');
+            const paid = parseFloat(paidInput.value) || 0;
+            //const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
+            //const customerId = document.getElementById('customer').value;
+            //const employeeId = document.getElementById('employee').value;
+            const employeeInput = document.getElementById('employee-input');
+            const employeeId = employeeInput.dataset.id;
+            const customerInput = document.getElementById('customer-input');
+            const customerId = customerInput.dataset.id;
 
-            // Validasi
-            if (!customerId) {
-                alert('Please select a customer');
-                return;
-            }
+            // Debugging: Periksa nilai customerId dan employeeId
+            //console.log("Customer ID:", customerId);
+            //console.log("Employee ID:", employeeId);
+
+            // Validasi Employee
             if (!employeeId) {
-                alert('Please select an employee');
+                employeeInput.setCustomValidity('Please select an employee');
+                employeeInput.reportValidity(); // Tampilkan notifikasi error
                 return;
+            } else {
+                employeeInput.setCustomValidity(''); // Hapus pesan error jika valid
             }
-            if (paid < total) {
-                alert('Insufficient payment amount');
+
+            // Validasi Customer
+            if (!customerId) {
+                customerInput.setCustomValidity('Please select a customer');
+                customerInput.reportValidity(); // Tampilkan notifikasi error
                 return;
+            } else {
+                customerInput.setCustomValidity(''); // Hapus pesan error jika valid
+            }
+
+            // Validasi Paid Amount
+            if (paid < total) {
+                paidInput.setCustomValidity('Insufficient payment amount');
+                paidInput.reportValidity(); // Tampilkan notifikasi error
+                return;
+            } else {
+                paidInput.setCustomValidity(''); // Hapus pesan error jika valid
             }
 
             const data = {
@@ -295,8 +492,8 @@
                 payment_method: document.getElementById('payment-method').value,
                 paid_amount: paid,
                 change_amount: paid - total,
-                customer_id: parseInt(customerId),
-                employee_id: parseInt(employeeId)
+                employee_id: parseInt(employeeId),
+                customer_id: parseInt(customerId)
             };
             //console.log('Data yang akan dikirim:', JSON.stringify(data, null, 2));
 
@@ -322,14 +519,28 @@
                 cart = [];
                 updateCartDisplay();
                 document.getElementById('paid-amount').value = '';
-                document.getElementById('customer').value = '';
-                document.getElementById('employee').value = '';
+                employeeInput.value = '';
+                employeeInput.removeAttribute('data-id'); // Hapus ID setelah selesai
+                customerInput.value = '';
+                customerInput.removeAttribute('data-id'); // Hapus ID setelah selesai
             } catch (error) {
                 //console.error('Error details:', error);
                 //console.error('Response dari server:', error.response);
                 alert(`Transaction failed: ${error.message}`);
             }
         }
+        // Tambahkan event listener untuk menghapus pesan error saat mengetik
+        document.getElementById('customer-input').addEventListener('input', function () {
+            this.setCustomValidity(''); // Hapus pesan error
+        });
+
+        document.getElementById('employee-input').addEventListener('input', function () {
+            this.setCustomValidity(''); // Hapus pesan error
+        });
+
+        document.getElementById('paid-amount').addEventListener('input', function () {
+            this.setCustomValidity(''); // Hapus pesan error
+        });
 
         function getCookie(name) {
             let cookieValue = null;

@@ -9,11 +9,11 @@ from management.models import Customer, Employee
 import json
 import logging
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseRedirect
 
 logger = logging.getLogger(__name__)
 
-def homepage(request):
-    return render(request, 'homepage.html')
+
 
 @login_required
 def cashier_view(request):
@@ -31,13 +31,19 @@ def get_product(request):
     try:
         product = Product.objects.get(product_number=code)
         if product.qty <= 0:
-            return JsonResponse({'error': 'Product is out of stock'}, status=400)
+            return JsonResponse({
+                'error': 'Product is out of stock',
+                'product_number': product.product_number,
+                'name': product.name,
+                'stock': 0
+            }, status=400)
         
         return JsonResponse({
             'product_number': product.product_number,
             'name' : product.name,
             'price' : str(product.price),
-            'stock' : product.qty
+            'stock' : product.qty,
+            'status': 'available'
         })
     
     except Product.DoesNotExist:
@@ -52,12 +58,12 @@ def save_transaction(request):
 
     try:
         # Log request body
-        print("Raw request body:", request.body.decode('utf-8'))
+        #print("Raw request body:", request.body.decode('utf-8'))
 
         data = json.loads(request.body)
-        print("Parsed data:", data)
+        #print("Parsed data:", data)
         items = data.get('items', [])
-        print("Items:", items)
+        #print("Items:", items)
     
         # Validasi customer
         try:
@@ -136,3 +142,20 @@ def save_transaction(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 
+def search_employees(request):
+    query = request.GET.get('query', '').strip().lower()
+    if not query:
+        return JsonResponse([], safe=False)
+
+    employees = Employee.objects.filter(name__icontains=query)
+    data = [{'id': emp.id, 'name': emp.name} for emp in employees]
+    return JsonResponse(data, safe=False)
+
+def search_customers(request):
+    query = request.GET.get('query', '').strip().lower()
+    if not query:
+        return JsonResponse([], safe=False)
+
+    customers = Customer.objects.filter(name__icontains=query)
+    data = [{'id': customer.id, 'name': customer.name} for customer in customers]
+    return JsonResponse(data, safe=False)

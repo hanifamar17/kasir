@@ -129,3 +129,18 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Durasi session (misalnya, 30 menit = 1800 detik)
+SESSION_COOKIE_AGE = 3600  # 60 minutes
+
+# Nonaktifkan perpanjangan waktu otomatis
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Hapus session saat browser ditutup
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+MIDDLEWARE += [
+    'App.middleware.SessionTimeoutMiddleware',  # Ganti "App" dengan nama aplikasi Anda
+]
+
+LOGIN_URL = '/admin/'
